@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rehan AI — Personal Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent3: #06b6d4;
+    --glow: rgba(99,102,241,0.35);
+    --glow2: rgba(139,92,246,0.25);
+    --font: 'Inter', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow: hidden;
+  }
+
+  /* ───── BACKGROUND ───── */
+  .bg-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .bg-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .bg-blob.b1 { width: 500px; height: 500px; background: #6366f1; top: -150px; left: -100px; animation-delay: 0s; }
+  .bg-blob.b2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -100px; right: -100px; animation-delay: -4s; }
+  .bg-blob.b3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 60%; animation-delay: -8s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    100% { transform: translate(30px,20px) scale(1.08); }
+  }
+
+  /* ───── LAYOUT ───── */
+  .shell {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 16px 20px;
+    gap: 0;
+  }
+
+  /* ───── TOP BAR ───── */
+  .topbar {
+    width: 100%;
+    max-width: 780px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: blink 2.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  .brand-name {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  .brand-name span { color: var(--accent); }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 20px;
+    font-size: 11px;
+    color: #a5b4fc;
+    font-weight: 500;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+    animation: blink 1.8s ease-in-out infinite;
+  }
+
+  /* ───── ORB AREA ───── */
+  .orb-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+  }
+
+  .orb-stage {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* outer rings */
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(99,102,241,0.15);
+    animation: ring-spin linear infinite;
+  }
+  .ring.r1 { width: 160px; height: 160px; animation-duration: 18s; border-color: rgba(99,102,241,0.2); }
+  .ring.r2 { width: 210px; height: 210px; animation-duration: 28s; animation-direction: reverse; border-color: rgba(139,92,246,0.12); }
+  .ring.r3 { width: 260px; height: 260px; animation-duration: 40s; border-color: rgba(6,182,212,0.08); }
+
+  .ring::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .ring.r2::before { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .ring.r3::before { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); width: 5px; height: 5px; top: -2.5px; }
+
+  @keyframes ring-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* the orb itself */
+  .orb {
+    position: relative;
+    z-index: 2;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #818cf8, #6366f1 40%, #4338ca 70%, #1e1b4b);
+    box-shadow:
+      0 0 0 1px rgba(99,102,241,0.4),
+      0 0 30px rgba(99,102,241,0.5),
+      0 0 60px rgba(99,102,241,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 8px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+  }
+
+  .orb:hover {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 1px rgba(99,102,241,0.6),
+      0 0 40px rgba(99,102,241,0.7),
+      0 0 80px rgba(99,102,241,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      inset 0 -2px 8px rgba(0,0,0,0.4);
+  }
+
+  .orb.listening {
+    animation: orb-listen 1.5s ease-in-out infinite;
+  }
+
+  .orb.thinking {
+    animation: orb-think 1.2s ease-in-out infinite;
+  }
+
+  @keyframes orb-listen {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 1px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+    50% { transform: scale(1.06); box-shadow: 0 0 0 2px rgba(99,102,241,0.8), 0 0 60px rgba(99,102,241,0.8), 0 0 100px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.25); }
+  }
+
+  @keyframes orb-think {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.03) rotate(1deg); }
+    75% { transform: scale(1.03) rotate(-1deg); }
+  }
+
+  /* specular highlight */
+  .orb::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    width: 30px;
+    height: 18px;
+    background: rgba(255,255,255,0.22);
+    border-radius: 50%;
+    filter: blur(4px);
+    transform: rotate(-30deg);
+  }
+
+  .orb-icon {
+    font-size: 36px;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 20px rgba(255,255,255,0.5);
+    z-index: 1;
+    transition: transform 0.3s;
+  }
+
+  .orb-name {
+    text-align: center;
+  }
+
+  .orb-name h2 {
+    font-size: 20px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #c7d2fe, #a5b4fc, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+  }
+
+  .orb-name p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  /* wave bars */
+  .wave-bars {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .wave-bars.active { opacity: 1; }
+  .bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: wave 1s ease-in-out infinite;
+  }
+  .bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .bar:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+  .bar:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+  .bar:nth-child(5) { height: 18px; animation-delay: 0.15s; }
+  .bar:nth-child(6) { height: 8px; animation-delay: 0.25s; }
+  .bar:nth-child(7) { height: 16px; animation-delay: 0.05s; }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
+  }
+
+  /* ───── CHAT AREA ───── */
+  .chat-wrap {
+    width: 100%;
+    max-width: 680px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    padding: 4px 2px 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99,102,241,0.2) transparent;
+  }
+
+  .chat-wrap::-webkit-scrollbar { width: 4px; }
+  .chat-wrap::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 4px; }
+
+  .msg-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    animation: msg-in 0.25s ease;
+  }
+
+  .msg-row.user { flex-direction: row-reverse; }
+
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .av {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .av.ai {
+    background: radial-gradient(circle at 35% 35%, #818cf8, #4338ca);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(99,102,241,0.4);
+  }
+
+  .av.user {
+    background: var(--card);
+    color: var(--muted);
+    border: 1px solid var(--border-hover);
+  }
+
+  .bubble {
+    max-width: 76%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  .msg-row.ai .bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px 16px 16px 16px;
+  }
+
+  .msg-row.user .bubble {
+    background: linear-gradient(135deg, #4338ca, #6366f1);
+    color: #fff;
+    border-radius: 16px 4px 16px 16px;
+    box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+  }
+
+  .typing-bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px 16px 16px 16px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .tdot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: tdot 1.2s ease-in-out infinite;
+  }
+
+  .tdot:nth-child(2) { animation-delay: 0.2s; background: #818cf8; }
+  .tdot:nth-child(3) { animation-delay: 0.4s; background: var(--accent2); }
+
+  @keyframes tdot {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* ───── SUGGESTION CHIPS ───── */
+  .chips-wrap {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-hover);
+    background: rgba(99,102,241,0.05);
+    color: #a5b4fc;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    font-family: var(--font);
+  }
+
+  .chip:hover {
+    background: rgba(99,102,241,0.15);
+    border-color: rgba(99,102,241,0.4);
+    color: #c7d2fe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+  }
+
+  /* ───── INPUT AREA ───── */
+  .input-dock {
+    width: 100%;
+    max-width: 680px;
+    flex-shrink: 0;
+  }
+
+  .input-glass {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(22,22,31,0.8);
+    border: 1px solid var(--border-hover);
+    border-radius: 28px;
+    padding: 8px 8px 8px 18px;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-glass:focus-within {
+    border-color: rgba(99,102,241,0.5);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1), 0 0 20px rgba(99,102,241,0.15);
+  }
+
+  #q {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    font-weight: 400;
+  }
+
+  #q::placeholder { color: var(--muted); }
+
+  #go {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 0 14px rgba(99,102,241,0.4);
+    flex-shrink: 0;
+  }
+
+  #go:hover { transform: scale(1.08); box-shadow: 0 0 20px rgba(99,102,241,0.6); }
+  #go:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+  .footer-note {
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 8px;
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-scene">
+  <div class="bg-grid"></div>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+</div>
+
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div class="brand-name">Rehan<span>.AI</span></div>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      Online
+    </div>
+  </div>
+
+  <!-- ORB -->
+  <div class="orb-section">
+    <div class="orb-stage">
+      <div class="ring r3"></div>
+      <div class="ring r2"></div>
+      <div class="ring r1"></div>
+      <div class="orb" id="orb">
+        <span class="orb-icon">✦</span>
+      </div>
+    </div>
+    <div class="orb-name">
+      <h2>Hi, I'm Rehan's AI</h2>
+      <p>Personal assistant · Resume-powered</p>
+    </div>
+    <div class="wave-bars" id="waves">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-wrap" id="chat">
+    <div class="msg-row ai">
+      <div class="av ai">R</div>
+      <div class="bubble">Hey there! 👋 I'm Rehan's personal AI assistant. Ask me anything about his background, skills, education, projects, or achievements — I know it all!</div>
+    </div>
+  </div>
+
+  <!-- CHIPS -->
+  <div class="chips-wrap" id="chips">
+    <button class="chip" onclick="ask('Who is Rehan? Give me a short intro.')">Who is Rehan?</button>
+    <button class="chip" onclick="ask('What are his technical skills?')">Technical skills</button>
+    <button class="chip" onclick="ask('Tell me about his education')">Education</button>
+    <button class="chip" onclick="ask('What projects has he built?')">Projects</button>
+    <button class="chip" onclick="ask('What awards has he won?')">Achievements</button>
+    <button class="chip" onclick="ask('How can I contact Rehan?')">Contact info</button>
+    <button class="chip" onclick="ask('What makes Rehan stand out as a candidate?')">Why hire Rehan?</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-dock">
+    <div class="input-glass">
+      <input id="q" type="text" placeholder="Ask anything about Rehan…" autocomplete="off" />
+      <button id="go" onclick="send()" aria-label="Send">➤</button>
+    </div>
+    <div class="footer-note">Powered by Claude · All answers from Rehan's resume</div>
+  </div>
+
+</div>
+
+<script>
+const SYSTEM = `You are a sleek personal AI assistant for Mohmed Rehan Mohmed Ishaq Panchbhaiya. Answer ONLY questions about him based on this resume. Be conversational, warm, and concise — like a premium voice assistant. Keep replies to 2-4 sentences unless a list genuinely helps. Never invent information.
+
+FULL NAME: Mohmed Rehan Mohmed Ishaq Panchbhaiya
+PROFESSIONAL TITLE: Artificial Intelligence & Data Analyst
+PHONE: +91 9974113484
+EMAIL: rehanpanchbhai@gmail.com
+LOCATION: Himatnagar, Gujarat, India
+
+EDUCATION:
+- B.Sc.IT in Artificial Intelligence — School of Emerging Science & Technology (SEST), Gujarat University, Ahmedabad | 2021–2025 | CGPA: 6.7/10
+- HSC (12th Science) — Rumi English High School, Himatnagar | 2021 | 70%
+- SSC (10th) — Rumi English High School, Himatnagar | 2019 | 80%
+
+PROJECTS:
+Water Quality Index (WQI) Modelling using Polynomial Regression
+- Technologies: Python, Scikit-learn, Pandas, Matplotlib, Polynomial Regression
+- Built a predictive ML model to determine water quality from multi-parameter environmental data. Performed EDA, feature engineering, and created visualizations.
+
+TECHNICAL SKILLS: Machine Learning, Deep Learning, Python (Pandas, NumPy, Scikit-learn, Matplotlib), Data Visualization, Tableau, Microsoft Excel, Statistical Modelling, EDA & Feature Engineering, Polynomial Regression
+
+SOFT SKILLS: Strong analytical problem-solver, continuous self-motivated learner, clear communicator who translates technical insights for non-technical audiences, collaborative team player, competitive mindset
+
+CERTIFICATIONS: Gujarat Science Congress — Science & Technology Through AI (2024)
+
+AWARDS: State Champion in Inline Skating Tournament (Gujarat State Level)
+
+LANGUAGES: English (Professional), Hindi (Native), Gujarati (Native)
+
+WORK EXPERIENCE: Currently seeking first professional role. Actively looking for internships in AI/ML and Data Analytics. Has strong academic project experience.
+
+If asked something outside this data, politely say you only have Rehan's resume information.`;
+
+const history = [];
+const chatEl = document.getElementById('chat');
+const orb = document.getElementById('orb');
+const waves = document.getElementById('waves');
+const chips = document.getElementById('chips');
+
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+function ask(q) {
+  document.getElementById('q').value = q;
+  send();
+}
+
+function addMsg(role, text) {
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+  const av = document.createElement('div');
+  av.className = 'av ' + (role === 'ai' ? 'ai' : 'user');
+  av.textContent = role === 'ai' ? 'R' : 'U';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.textContent = text;
+  row.appendChild(av);
+  row.appendChild(bub);
+  chatEl.appendChild(row);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.id = 'typing';
+  const av = document.createElement('div');
+  av.className = 'av ai';
+  av.textContent = 'R';
+  const bub = document.createElement('div');
+  bub.className = 'typing-bubble';
+  bub.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+  row.appendChild(av);
+  row.appendChild(bub);
+  chatEl.appendChild(row);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+async function send() {
+  const input = document.getElementById('q');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+
+  chips.style.display = 'none';
+  addMsg('user', q);
+  history.push({ role: 'user', content: q });
+
+  document.getElementById('go').disabled = true;
+  showTyping();
+  orb.classList.add('thinking');
+  waves.classList.add('active');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = (data.content || []).map(b => b.text || '').join('');
+    history.push({ role: 'assistant', content: reply });
+    removeTyping();
+    addMsg('ai', reply);
+  } catch {
+    removeTyping();
+    addMsg('ai', "I couldn't connect right now. Please try again in a moment.");
+  }
+
+  orb.classList.remove('thinking');
+  waves.classList.remove('active');
+  document.getElementById('go').disabled = false;
+  input.focus();
+}
+</script>
+</body>
+</html>
